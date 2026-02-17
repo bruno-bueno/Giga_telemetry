@@ -1,0 +1,23 @@
+# Build and Debug
+bin/
+obj/
+.vs/
+.vscode/
+
+# Publish folders
+publish/
+publish_single/
+publish_trimmed/
+
+# User-specific files
+*.user
+*.suo
+*.userprefs
+
+# OS generated files
+Thumbs.db
+.DS_Store
+
+# Secrets and Logs
+appsettings.Development.json
+*.log
