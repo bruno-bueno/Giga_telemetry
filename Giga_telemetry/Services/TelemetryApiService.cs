@@ -13,16 +13,15 @@ public interface ITelemetryApiService
 public class TelemetryApiService : ITelemetryApiService
 {
     private readonly HttpClient _httpClient;
+    private readonly ILogger<TelemetryApiService> _logger;
     private const int MaxRetries = 3;
 
-    public TelemetryApiService(HttpClient httpClient)
+    public TelemetryApiService(HttpClient httpClient, ILogger<TelemetryApiService> logger)
     {
         _httpClient = httpClient;
-        // Base address should be configured in Program.cs, but default here if needed
-        if (_httpClient.BaseAddress == null)
-        {
-            _httpClient.BaseAddress = new Uri("http://localhost:3000");
-        }
+        _logger = logger;
+        
+        // Base address should be configured in Program.cs
     }
 
     public async Task<bool> SendTelemetryAsync(TelemetryPayload payload)
@@ -45,10 +44,7 @@ public class TelemetryApiService : ITelemetryApiService
             var content = new MultipartFormDataContent();
             var imageContent = new ByteArrayContent(imageBytes);
             imageContent.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
-            content.Add(imageContent, "file", "screenshot.jpg"); // Content is disposed by request/response? No, explicit dispose needed usually.
-            // Using logic inside here is tricky with Func. 
-            // We'll dispose manually or rely on GC if not excessive. 
-            // Better: Create content, send, then dispose.
+            content.Add(imageContent, "file", "screenshot.jpg"); 
             
             var request = new HttpRequestMessage(HttpMethod.Post, "/artifacts/screenshot");
             request.Headers.Add("x-machine-id", machineId);
@@ -56,10 +52,7 @@ public class TelemetryApiService : ITelemetryApiService
             request.Content = content;
 
             var response = await _httpClient.SendAsync(request);
-            
-            // Dispose content after send (MultipartFormDataContent must be disposed)
             content.Dispose();
-            
             return response;
         });
     }
@@ -76,17 +69,18 @@ public class TelemetryApiService : ITelemetryApiService
                     return true;
                 }
                 
+                _logger.LogWarning("API Request failed. Status: {StatusCode}, Reason: {Reason}", 
+                    response.StatusCode, response.ReasonPhrase);
+                
                 // Don't retry client errors (4xx)
                 if ((int)response.StatusCode >= 400 && (int)response.StatusCode < 500)
                 {
                     return false;
                 }
-                
-                // Retry specific server errors 5xx
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Retry on exception (network failure)
+                _logger.LogError(ex, "API Request exception on attempt {Attempt}", i + 1);
             }
 
             if (i < MaxRetries - 1)

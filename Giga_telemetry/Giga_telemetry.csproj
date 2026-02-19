@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>dotnet-Giga_telemetry-6432ae7a-ed52-4b19-9a9d-c5dde9a140bd</UserSecretsId>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <OutputType>WinExe</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
