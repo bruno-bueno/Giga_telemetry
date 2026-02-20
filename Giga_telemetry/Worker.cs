@@ -33,6 +33,26 @@ namespace Giga_telemetry
                         logger.LogWarning("Failed to send telemetry.");
                     }
 
+                    // 1.5. Enviar Log de exemplo
+                    var logPayload = new Giga_telemetry.Models.LogPayload
+                    {
+                        MachineId = telemetry.MachineId,
+                        Timestamp = DateTime.UtcNow,
+                        Level = "info",
+                        Source = "agent",
+                        Message = "Ciclo de coleta finalizado",
+                        Context = new { memoryUsed = telemetry.Memory.Used }
+                    };
+                    var logSent = await apiService.SendLogAsync(logPayload);
+                    if (logSent)
+                    {
+                        logger.LogInformation("Log sent successfully.");
+                    }
+                    else
+                    {
+                        logger.LogWarning("Failed to send log.");
+                    }
+
                     // 2. Capturar e enviar Screenshot
                     // Apenas um exemplo: enviar screenshot a cada ciclo também
                     logger.LogInformation("Capturing screenshot...");

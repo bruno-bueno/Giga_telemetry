@@ -7,6 +7,7 @@ namespace Giga_telemetry.Services;
 public interface ITelemetryApiService
 {
     Task<bool> SendTelemetryAsync(TelemetryPayload payload);
+    Task<bool> SendLogAsync(LogPayload payload);
     Task<bool> SendScreenshotAsync(byte[] imageBytes, string machineId);
 }
 
@@ -29,6 +30,17 @@ public class TelemetryApiService : ITelemetryApiService
         return await ExecuteWithRetryAsync(async () =>
         {
             var request = new HttpRequestMessage(HttpMethod.Post, "/telemetry");
+            request.Headers.Add("x-machine-id", payload.MachineId);
+            request.Content = JsonContent.Create(payload);
+            return await _httpClient.SendAsync(request);
+        });
+    }
+
+    public async Task<bool> SendLogAsync(LogPayload payload)
+    {
+        return await ExecuteWithRetryAsync(async () =>
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, "/logs");
             request.Headers.Add("x-machine-id", payload.MachineId);
             request.Content = JsonContent.Create(payload);
             return await _httpClient.SendAsync(request);
